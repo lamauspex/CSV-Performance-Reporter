@@ -18,22 +18,22 @@
 
 1. Клонируйте репозиторий
 2. Установите зависимости:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 ## Использование
 
 ### Базовое использование
 
 ```bash
-python main.py --files data/employees_sample1.csv --report performance
+python main.py --files data/employees1.csv --report performance
 ```
 
 ### Работа с несколькими файлами
 
 ```bash
-python main.py --files data/employees_sample1.csv data/employees_sample2.csv --report performance
+python main.py --files data/employees1.csv data/employees2.csv --report performance
 ```
 
 ### Параметры
@@ -66,26 +66,7 @@ CSV файлы должны содержать следующие колонки
 - `BaseReport` - базовый класс для всех отчетов
 - `PerformanceReport` - конкретная реализация отчета по эффективности
 
-### Добавление нового отчета
 
-1. Создайте новый класс, наследующий от `BaseReport`
-2. Реализуйте метод `generate()`
-3. Зарегистрируйте отчет в `ReportGenerator.__init__()`
-
-Пример нового отчета:
-
-```python
-class SkillsReport(BaseReport):
-    def __init__(self):
-        super().__init__("skills")
-    
-    def generate(self, data):
-        # Логика генерации отчета по навыкам
-        pass
-
-# Регистрация в ReportGenerator
-self.reports['skills'] = SkillsReport()
-```
 
 ## Тестирование
 
@@ -105,7 +86,7 @@ pytest tests/ --cov=. --cov-report=html
 
 ```
 ╔════╤══════════════════════╤═════════════════════╤═══════════════════════════╗
-║ №  │ Позиция              │ Средняя эффективность│ Количество сотрудников    ║
+║ №  │ Позиция              │Средняя эффективность│ Количество сотрудников    ║
 ╠════╪══════════════════════╪═════════════════════╪═══════════════════════════╣
 ║ 1  │ Backend Developer    │ 4.67                │ 3                         ║
 ║ 2  │ Mobile Developer     │ 4.63                │ 3                         ║

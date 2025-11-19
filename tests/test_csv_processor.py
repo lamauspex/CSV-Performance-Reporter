@@ -176,3 +176,141 @@ Test User,Developer,10,2.5,"Python",Team,1
             assert data[0]['performance'] == 2.5
         finally:
             os.unlink(temp_file)
+
+    def test_discover_and_validate_files_success(self):
+        """Тест успешного обнаружения и валидации CSV файлов"""
+        processor = CSVProcessor()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Создаем валидный CSV файл
+            valid_csv = os.path.join(temp_dir, "valid_data.csv")
+            csv_content = """name,position,completed_tasks,performance,skills,team,experience_years
+Test User,Developer,10,4.5,"Python, Django",Test Team,2
+"""
+
+            with open(valid_csv, 'w') as f:
+                f.write(csv_content)
+
+            # Создаем не-CSV файл (должен быть проигнорирован)
+            txt_file = os.path.join(temp_dir, "readme.txt")
+            with open(txt_file, 'w') as f:
+                f.write("This is not a CSV file")
+
+            # Тестируем обнаружение и валидацию
+            result = processor.discover_and_validate_files(temp_dir)
+
+            assert len(result) == 1
+            assert valid_csv in result
+            assert txt_file not in result
+
+    def test_discover_and_validate_files_empty_folder(self):
+        """Тест с пустой папкой"""
+        processor = CSVProcessor()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(
+                ValueError,
+                match="В папке .* не найдено CSV файлов"
+            ):
+                processor.discover_and_validate_files(temp_dir)
+
+    def test_discover_and_validate_files_folder_not_found(self):
+        """Тест с несуществующей папкой"""
+        processor = CSVProcessor()
+
+        with pytest.raises(FileNotFoundError, match="Папка не найдена"):
+            processor.discover_and_validate_files("/nonexistent/folder")
+
+    def test_discover_and_validate_files_path_not_directory(self):
+        """Тест когда путь не является папкой"""
+        processor = CSVProcessor()
+
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            with pytest.raises(
+                NotADirectoryError,
+                match="Путь не является папкой"
+            ):
+                processor.discover_and_validate_files(tmp_file.name)
+
+    def test_discover_and_validate_files_with_subdirectories(self):
+        """Тест обнаружения файлов в подпапках"""
+        processor = CSVProcessor()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Создаем подпапку
+            subfolder = os.path.join(temp_dir, "subfolder")
+            os.makedirs(subfolder)
+
+            # Создаем файлы в разных местах
+            root_file = os.path.join(temp_dir, "root.csv")
+            sub_file = os.path.join(subfolder, "sub.csv")
+
+            csv_content = """name,position,completed_tasks,performance,skills,team,experience_years
+Test User,Developer,10,4.5,"Python",Test Team,2
+"""
+
+            for file_path in [root_file, sub_file]:
+                with open(file_path, 'w') as f:
+                    f.write(csv_content)
+
+            # Тестируем обнаружение
+            result = processor.discover_and_validate_files(temp_dir)
+
+            assert len(result) == 2
+            assert root_file in result
+            assert sub_file in result
+
+    def test_discover_and_validate_files_invalid_csv(self):
+        """Тест с невалидным CSV файлом"""
+        processor = CSVProcessor()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Создаем невалидный CSV файл
+            invalid_csv = os.path.join(temp_dir, "invalid.csv")
+            csv_content = """name,position,invalid_column
+Test User,Developer,10
+"""
+
+            with open(invalid_csv, 'w') as f:
+                f.write(csv_content)
+
+            # discover_and_validate_files не должен
+            # валидировать содержимое файлов,
+            # только обнаруживать их. Валидация происходит при load_data.
+            result = processor.discover_and_validate_files(temp_dir)
+
+            assert len(result) == 1
+            assert invalid_csv in result
+
+    def test_discover_and_validate_files_mixed_files(self):
+        """Тест с смешанными типами файлов"""
+        processor = CSVProcessor()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Создаем различные файлы
+            csv_file = os.path.join(temp_dir, "data.csv")
+            txt_file = os.path.join(temp_dir, "readme.txt")
+            pdf_file = os.path.join(temp_dir, "document.pdf")
+            xlsx_file = os.path.join(temp_dir, "data.xlsx")
+
+            # Создаем только CSV файл с содержимым
+            csv_content = """name,position,completed_tasks,performance,skills,team,experience_years
+Test User,Developer,10,4.5,"Python",Test Team,2
+"""
+
+            with open(csv_file, 'w') as f:
+                f.write(csv_content)
+
+            # Создаем остальные файлы как пустые
+            for file_path in [txt_file, pdf_file, xlsx_file]:
+                with open(file_path, 'w') as f:
+                    f.write("not a csv")
+
+            result = processor.discover_and_validate_files(temp_dir)
+
+            # Только CSV файл должен быть найден
+            assert len(result) == 1
+            assert csv_file in result
+            assert txt_file not in result
+            assert pdf_file not in result
+            assert xlsx_file not in result

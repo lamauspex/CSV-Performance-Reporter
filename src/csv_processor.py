@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 import os
 
 from src.config import config
+from src.utils.discover import discover_csv_files
 
 
 class CSVProcessor:
@@ -86,6 +87,34 @@ class CSVProcessor:
                 f"Файл {file_path} содержит некорректные колонки. "
                 f"Отсутствуют: {', '.join(missing_columns)}"
             )
+
+    def discover_and_validate_files(self, folder_path: str) -> List[str]:
+        """
+        Определяет и валидирует все CSV файлы в указанной папке
+
+        Args:
+            folder_path: Путь к папке для поиска CSV файлов
+
+        Returns:
+            Список путей к найденным CSV файлам
+
+        Raises:
+            FileNotFoundError: Если папка не найдена
+            NotADirectoryError: Если путь не является папкой
+            PermissionError: Если нет доступа к папке
+        """
+        # Находим все CSV файлы в папке
+        csv_files = discover_csv_files(folder_path)
+
+        # TODO: Здесь можно добавить валидацию структуры CSV файлов:
+        # - проверка наличия нужных колонок
+        # - валидация формата данных
+        # - фильтрация невалидных файлов
+
+        if not csv_files:
+            raise ValueError(f"В папке {folder_path} не найдено CSV файлов")
+
+        return csv_files
 
     def _process_row(
             self,

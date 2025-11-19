@@ -2,7 +2,9 @@
 Тесты для ReportGenerator
 """
 import pytest
-from src.report_generator import ReportGenerator, PerformanceReport
+
+from src.report_generator import (
+    ReportGenerator, PerformanceReport, SkillsReport)
 from src.config import config
 
 
@@ -89,6 +91,229 @@ class TestPerformanceReport:
         assert designer_line_idx < developer_line_idx
 
 
+class TestSkillsReport:
+    """Тесты для класса SkillsReport"""
+
+    def test_generate_skills_report(self):
+        """Тест генерации отчета по навыкам"""
+        report = SkillsReport()
+
+        # Используем реальные тестовые данные
+        test_file = config.get('test_data_file')
+        from src.csv_processor import CSVProcessor
+
+        processor = CSVProcessor()
+        data = processor.load_data([test_file])
+
+        result = report.generate(data)
+
+        # Проверяем заголовки отчета
+        assert 'ОТЧЕТ ПО НАВЫКАМ СОТРУДНИКОВ' in result
+        assert 'Навык' in result
+        assert 'Кол-во сотрудников' in result
+        assert 'Ср. эффективность' in result
+        assert 'Сотрудники' in result
+
+        # Проверяем наличие данных из тестового файла
+        assert 'Python' in result  # Навык из Alex Ivanov
+        assert 'Alex Ivanov' in result
+        assert 'Maria Petrova' in result
+        assert 'John Smith' in result
+
+    def test_skills_report_empty_data(self):
+        """Тест генерации отчета по навыкам с пустыми данными"""
+        report = SkillsReport()
+
+        result = report.generate([])
+
+        # Должен быть создан отчет для пустых данных
+        assert 'Нет данных для анализа навыков' in result
+
+    def test_skills_parsing(self):
+        """Тест парсинга навыков из строки"""
+        report = SkillsReport()
+
+        # Тест корректного парсинга
+        skills_string = "Python, Django, PostgreSQL, Docker"
+        result = report._parse_skills_string(skills_string)
+        expected = ['Python', 'Django', 'PostgreSQL', 'Docker']
+        assert result == expected
+
+        # Тест с лишними пробелами
+        skills_string = " Python , Django , PostgreSQL "
+        result = report._parse_skills_string(skills_string)
+        expected = ['Python', 'Django', 'PostgreSQL']
+        assert result == expected
+
+        # Тест с пустой строкой
+        result = report._parse_skills_string("")
+        expected = []
+        assert result == expected
+
+        # Тест с None
+        result = report._parse_skills_string(None)
+        expected = []
+        assert result == expected
+
+    def test_skills_distribution_analysis(self):
+        """Тест анализа распределения навыков"""
+        report = SkillsReport()
+
+        # Создаем тестовые данные
+        data = [
+            {
+                'name': 'User1',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.5,
+                'skills': 'Python, Django',
+                'team': 'Team',
+                'experience_years': 2
+            },
+            {
+                'name': 'User2',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.8,
+                'skills': 'Python, Flask',
+                'team': 'Team',
+                'experience_years': 2
+            },
+            {
+                'name': 'User3',
+                'position': 'Designer',
+                'completed_tasks': 10,
+                'performance': 4.0,
+                'skills': 'Figma, Sketch',
+                'team': 'Team',
+                'experience_years': 2
+            }
+        ]
+
+        # Парсим данные
+        parsed_data = report._parse_skills_from_data(data)
+
+        # Анализируем распределение навыков
+        skills_stats = report._analyze_skills_distribution(parsed_data)
+
+        # Проверяем результаты
+        assert len(skills_stats) > 0
+
+        # Python должен быть самым популярным (2 сотрудника >= MIN_OCCURRENCE)
+        python_stats = next(
+            (s for s in skills_stats if s['skill'] == 'Python'), None)
+        assert python_stats is not None
+        assert python_stats['employee_count'] == 2
+        assert python_stats['avg_performance'] == 4.65  # (4.5 + 4.8) / 2
+
+        # Flask должен быть (1 сотрудник, но MIN_OCCURRENCE=2, поэтому не попадает)
+        # Этот тест проверяет, что редкие навыки фильтруются согласно конфигурации
+        flask_stats = next(
+            (s for s in skills_stats if s['skill'] == 'Flask'), None)
+        assert flask_stats is None  # Flask встречается только у 1 сотрудника
+
+        # Figma должен быть (1 сотрудник, но MIN_OCCURRENCE=2, поэтому не попадает)
+        figma_stats = next(
+            (s for s in skills_stats if s['skill'] == 'Figma'), None)
+        assert figma_stats is None  # Figma встречается только у 1 сотрудника
+
+    def test_employees_skills_analysis(self):
+        """Тест анализа сотрудников по навыкам"""
+        report = SkillsReport()
+
+        # Создаем тестовые данные
+        data = [
+            {
+                'name': 'User1',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.5,
+                'skills': 'Python, Django, Flask',
+                'team': 'Team',
+                'experience_years': 2
+            },
+            {
+                'name': 'User2',
+                'position': 'Designer',
+                'completed_tasks': 10,
+                'performance': 4.0,
+                'skills': 'Figma',
+                'team': 'Team',
+                'experience_years': 2
+            }
+        ]
+
+        # Парсим данные
+        parsed_data = report._parse_skills_from_data(data)
+
+        # Анализируем сотрудников по навыкам
+        employees_stats = report._analyze_employees_skills(parsed_data)
+
+        # Проверяем результаты
+        assert len(employees_stats) == 2
+
+        # User1 должен быть первым (больше навыков)
+        assert employees_stats[0]['name'] == 'User1'
+        assert employees_stats[0]['skills_count'] == 3
+        assert employees_stats[0]['skills'] == ['Python', 'Django', 'Flask']
+
+        # User2 должен быть вторым
+        assert employees_stats[1]['name'] == 'User2'
+        assert employees_stats[1]['skills_count'] == 1
+        assert employees_stats[1]['skills'] == ['Figma']
+
+    def test_skills_report_min_occurrence_config(self):
+        """Тест конфигурации минимального количества сотрудников для навыка"""
+        report = SkillsReport()
+
+        # Создаем данные с редкими навыками
+        data = [
+            {
+                'name': 'User1',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.5,
+                'skills': 'Python, Django',
+                'team': 'Team',
+                'experience_years': 2
+            },
+            {
+                'name': 'User2',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.8,
+                'skills': 'Python, Flask',
+                'team': 'Team',
+                'experience_years': 2
+            },
+            {
+                'name': 'User3',
+                'position': 'Designer',
+                'completed_tasks': 10,
+                'performance': 4.0,
+                'skills': 'RareSkill',
+                'team': 'Team',
+                'experience_years': 2
+            }
+        ]
+
+        # Парсим данные
+        parsed_data = report._parse_skills_from_data(data)
+
+        # Анализируем с минимальным количеством 2
+        skills_stats = report._analyze_skills_distribution(parsed_data)
+
+        # Python должен быть (2 сотрудника >= 2)
+        python_stats = next(
+            (s for s in skills_stats if s['skill'] == 'Python'), None)
+        assert python_stats is not None
+
+        # RareSkill не должен быть (1 сотрудник < 2)
+        rare_stats = next(
+            (s for s in skills_stats if s['skill'] == 'RareSkill'), None)
+        assert rare_stats is None
+
+
 class TestReportGenerator:
     """Тесты для класса ReportGenerator"""
 
@@ -106,6 +331,30 @@ class TestReportGenerator:
 
         assert 'performance' in result.lower() or 'эффективность' in result.lower()
         assert 'Backend Developer' in result
+
+    def test_generate_skills_report_via_generator(self):
+        """Тест генерации отчета по навыкам через ReportGenerator"""
+        generator = ReportGenerator()
+
+        # Создаем минимальные тестовые данные
+        data = [
+            {
+                'name': 'Test User',
+                'position': 'Developer',
+                'completed_tasks': 10,
+                'performance': 4.5,
+                'skills': 'Python, Django',
+                'team': 'Team',
+                'experience_years': 2
+            }
+        ]
+
+        result = generator.generate_report('skills', data)
+
+        # Проверяем, что отчет генерируется
+        assert 'ОТЧЕТ ПО НАВЫКАМ СОТРУДНИКОВ' in result
+        assert 'Python' in result
+        assert 'Test User' in result
 
     def test_generate_unsupported_report(self):
         """Тест генерации неподдерживаемого отчета"""

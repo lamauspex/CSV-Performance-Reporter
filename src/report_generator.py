@@ -154,12 +154,202 @@ class PerformanceReport(BaseReport):
         return tabulate([], headers=headers, tablefmt=table_format)
 
 
+class SkillsReport(BaseReport):
+    """Отчет по навыкам сотрудников"""
+
+    def __init__(self):
+        super().__init__("skills")
+
+    def generate(self, data: List[Dict[str, Any]]) -> str:
+        """
+        Генерирует отчет по навыкам
+
+        Отчет включает:
+        - Топ навыков по популярности
+        - Топ сотрудников по количеству навыков
+        - Статистику по навыкам
+
+        Args:
+            data: Список словарей с данными сотрудников
+
+        Returns:
+            Отформатированный отчет по навыкам
+        """
+        if not data:
+            return self._generate_empty_report()
+
+        # Парсинг навыков из данных
+        parsed_data = self._parse_skills_from_data(data)
+
+        # Анализ распределения навыков
+        skills_stats = self._analyze_skills_distribution(parsed_data)
+
+        # Анализ сотрудников по навыкам
+        employees_stats = self._analyze_employees_skills(parsed_data)
+
+        # Формирование отчета
+        return self._format_skills_report(skills_stats, employees_stats)
+
+    def _parse_skills_from_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Парсит навыки из данных сотрудников"""
+        parsed_data = []
+
+        for employee in data:
+            skills_str = employee.get('skills', '')
+            skills_list = self._parse_skills_string(skills_str)
+
+            parsed_employee = employee.copy()
+            parsed_employee['skills_list'] = skills_list
+            parsed_data.append(parsed_employee)
+
+        return parsed_data
+
+    def _parse_skills_string(self, skills_string: str) -> List[str]:
+        """Парсит строку навыков в список"""
+        if not skills_string:
+            return []
+
+        # Разделяем по запятой и убираем лишние пробелы
+        skills = [skill.strip() for skill in skills_string.split(',')]
+        # Убираем пустые строки
+        skills = [skill for skill in skills if skill]
+
+        return skills
+
+    def _analyze_skills_distribution(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Анализирует распределение навыков"""
+        skills_stats: DefaultDict[str, Dict[str, Any]] = defaultdict(
+            lambda: {'employees': [], 'performances': []}
+        )
+
+        min_occurrence = config.get('SKILLS_REPORT_MIN_OCCURRENCE', 2)
+
+        # Собираем статистику по каждому навыку
+        for employee in data:
+            name = employee['name']
+            performance = employee['performance']
+            skills_list = employee['skills_list']
+
+            for skill in skills_list:
+                skills_stats[skill]['employees'].append(name)
+                skills_stats[skill]['performances'].append(performance)
+
+        # Формируем результат
+        result = []
+        for skill, stats in skills_stats.items():
+            if len(stats['employees']) >= min_occurrence:
+                avg_performance = sum(
+                    stats['performances']) / len(stats['performances'])
+                result.append({
+                    'skill': skill,
+                    'employee_count': len(stats['employees']),
+                    'avg_performance': round(avg_performance, 2),
+                    'employees': stats['employees']
+                })
+
+        # Сортируем по количеству сотрудников (по убыванию)
+        return sorted(result, key=lambda x: x['employee_count'], reverse=True)
+
+    def _analyze_employees_skills(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Анализирует сотрудников по количеству навыков"""
+        employees_stats = []
+
+        for employee in data:
+            name = employee['name']
+            position = employee['position']
+            performance = employee['performance']
+            skills_list = employee['skills_list']
+
+            employees_stats.append({
+                'name': name,
+                'position': position,
+                'performance': performance,
+                'skills_count': len(skills_list),
+                'skills': skills_list
+            })
+
+        # Сортируем по количеству навыков (по убыванию)
+        return sorted(employees_stats, key=lambda x: x['skills_count'], reverse=True)
+
+    def _format_skills_report(self, skills_stats: List[Dict], employees_stats: List[Dict]) -> str:
+        """Форматирует полный отчет по навыкам"""
+        report_parts = []
+
+        # Заголовок отчета
+        report_parts.append("=== ОТЧЕТ ПО НАВЫКАМ СОТРУДНИКОВ ===\n")
+
+        # Топ навыков
+        report_parts.append(self._format_skills_table(
+            skills_stats[:10]))  # Топ 10
+        report_parts.append("\n")
+
+        # Топ сотрудников по навыкам
+        report_parts.append(self._format_employees_table(
+            employees_stats[:10]))  # Топ 10
+
+        return "".join(report_parts)
+
+    def _format_skills_table(self, skills_stats: List[Dict]) -> str:
+        """Форматирует таблицу навыков"""
+        if not skills_stats:
+            return "Навыки не найдены"
+
+        table_data = []
+        for i, skill_data in enumerate(skills_stats, 1):
+            employees_str = ', '.join(
+                skill_data['employees'][:3])  # Показываем первых 3
+            if len(skill_data['employees']) > 3:
+                employees_str += f" и еще {len(skill_data['employees']) - 3}"
+
+            table_data.append([
+                i,
+                skill_data['skill'],
+                skill_data['employee_count'],
+                skill_data['avg_performance'],
+                employees_str
+            ])
+
+        headers = ['№', 'Навык', 'Кол-во сотрудников',
+                   'Ср. эффективность', 'Сотрудники']
+        table_format = config.get('table_format', 'grid')
+
+        return tabulate(table_data, headers=headers, tablefmt=table_format)
+
+    def _format_employees_table(self, employees_stats: List[Dict]) -> str:
+        """Форматирует таблицу сотрудников"""
+        if not employees_stats:
+            return "Данные о сотрудниках не найдены"
+
+        table_data = []
+        for i, emp_data in enumerate(employees_stats, 1):
+            skills_str = ', '.join(emp_data['skills'])
+            table_data.append([
+                i,
+                emp_data['name'],
+                emp_data['position'],
+                emp_data['skills_count'],
+                emp_data['performance'],
+                skills_str
+            ])
+
+        headers = ['№', 'Имя', 'Позиция',
+                   'Кол-во навыков', 'Эффективность', 'Навыки']
+        table_format = config.get('table_format', 'grid')
+
+        return tabulate(table_data, headers=headers, tablefmt=table_format)
+
+    def _generate_empty_report(self) -> str:
+        """Генерирует отчет для пустых данных"""
+        return "Нет данных для анализа навыков"
+
+
 class ReportGenerator:
     """Генератор отчетов с поддержкой различных типов"""
 
     def __init__(self):
         self.reports: Dict[str, BaseReport] = {
-            'performance': PerformanceReport()
+            'performance': PerformanceReport(),
+            'skills': SkillsReport()
         }
 
     def generate_report(
