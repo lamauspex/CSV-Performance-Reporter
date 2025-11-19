@@ -22,7 +22,11 @@
 pip install -r requirements.txt
 ```
 
+
+
+
 ## Использование
+
 
 ### Базовое использование
 
@@ -30,11 +34,32 @@ pip install -r requirements.txt
 python main.py --files data/employees1.csv --report performance
 ```
 
-### Работа с несколькими файлами
+#### Работа с несколькими файлами
 
 ```bash
 python main.py --files data/employees1.csv data/employees2.csv --report performance
 ```
+```bash
+python main.py --folder data --report performance
+```
+
+
+
+### Для анализа навыков сотрудников используйте:
+
+```bash
+python main.py --files data/employees1.csv --report skills
+```
+
+### Работа с несколькими файлами
+```bash
+python main.py --files data/employees1.csv data/employees2.csv --report skills
+```
+```bash
+python main.py --folder data --report skills
+```
+
+
 
 ### Параметры
 

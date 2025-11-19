@@ -18,11 +18,13 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        # Валидируем файлы
-        validate_files(args.files)
-
-        # Загружаем и обрабатываем данные
-        data = load_and_process_data(args.files)
+        # Определяем источник файлов
+        if args.folder:
+            data = load_and_process_data_from_folder(args.folder)
+        else:
+            # Валидируем файлы
+            validate_files(args.files)
+            data = load_and_process_data(args.files)
 
         # Генерируем и выводим отчет
         report = generate_report(args.report, data)
@@ -42,18 +44,37 @@ def main() -> None:
 def create_argument_parser() -> argparse.ArgumentParser:
     """Создает парсер аргументов командной строки"""
     parser = argparse.ArgumentParser(
-        description='Генератор отчетов производительности из CSV файлов'
+        description='Генератор отчетов производительности из CSV файлов',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Доступные типы отчетов:
+  performance  Отчет по эффективности сотрудников по позициям
+  skills       Отчет по навыкам сотрудников
+
+Примеры использования:
+  python main.py --folder data --report performance
+  python main.py --folder data --report skills
+  python main.py --files data/employees1.csv --report performance
+        """
     )
-    parser.add_argument(
+
+    # Группа для файлов - либо --files, либо --folder
+    file_group = parser.add_mutually_exclusive_group(required=True)
+    file_group.add_argument(
         '--files',
         nargs='+',
-        required=True,
-        help='Пути к CSV файлам с данными'
+        help='Пути к CSV файлам с данными сотрудников'
     )
+    file_group.add_argument(
+        '--folder',
+        help='Папка для автоматического поиска CSV файлов'
+    )
+
     parser.add_argument(
         '--report',
         required=True,
-        help='Название отчета для генерации'
+        choices=['performance', 'skills'],
+        help='Тип отчета для генерации (performance или skills)'
     )
     return parser
 
@@ -61,8 +82,13 @@ def create_argument_parser() -> argparse.ArgumentParser:
 def validate_files(file_paths: List[str]) -> None:
     """Валидирует существование файлов"""
     for file_path in file_paths:
-        if not Path(file_path).exists():
+        path = Path(file_path)
+        if not path.exists():
             raise FileNotFoundError(f"Файл не найден: {file_path}")
+        if not path.is_file():
+            raise ValueError(f"Путь не является файлом: {file_path}")
+        if not file_path.lower().endswith('.csv'):
+            raise ValueError(f"Файл должен иметь расширение .csv: {file_path}")
 
 
 def load_and_process_data(file_paths: List[str]) -> List[Dict[str, Any]]:
@@ -71,9 +97,21 @@ def load_and_process_data(file_paths: List[str]) -> List[Dict[str, Any]]:
     return processor.load_data(file_paths)
 
 
+def load_and_process_data_from_folder(folder_path: str) -> List[Dict[str, Any]]:
+    """Загружает и обрабатывает данные из всех CSV файлов в папке"""
+    processor = CSVProcessor()
+    csv_files = processor.discover_and_validate_files(folder_path)
+    return processor.load_data(csv_files)
+
+
 def generate_report(report_type: str, data: List[Dict[str, Any]]) -> str:
     """Генерирует отчет"""
     report_gen = ReportGenerator()
+
+    # Проверяем, что данные не пусты
+    if not data:
+        raise ValueError("Нет данных для генерации отчета")
+
     return report_gen.generate_report(report_type, data)
 
 
