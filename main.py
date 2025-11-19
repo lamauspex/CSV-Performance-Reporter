@@ -15,7 +15,19 @@ from src.report_generator import ReportGenerator
 def main() -> None:
     """Основная функция приложения"""
     parser = create_argument_parser()
-    args = parser.parse_args()
+
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        # Обрабатываем ошибки парсинга аргументов
+        if e.code == 2:  # Ошибка аргументов
+            print(
+                "Ошибка: Неподдерживаемый тип отчета",
+                file=sys.stderr
+            )
+            sys.exit(2)
+        else:
+            sys.exit(e.code)
 
     try:
         # Определяем источник файлов
@@ -97,7 +109,8 @@ def load_and_process_data(file_paths: List[str]) -> List[Dict[str, Any]]:
     return processor.load_data(file_paths)
 
 
-def load_and_process_data_from_folder(folder_path: str) -> List[Dict[str, Any]]:
+def load_and_process_data_from_folder(
+        folder_path: str) -> List[Dict[str, Any]]:
     """Загружает и обрабатывает данные из всех CSV файлов в папке"""
     processor = CSVProcessor()
     csv_files = processor.discover_and_validate_files(folder_path)

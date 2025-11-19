@@ -125,7 +125,7 @@ class TestIntegration:
                 with pytest.raises(SystemExit) as exc_info:
                     main()
 
-                assert exc_info.value.code == 1
+                assert exc_info.value.code == 2
                 stderr_output = mock_stderr.getvalue()
                 assert 'Неподдерживаемый тип отчета' in stderr_output
 

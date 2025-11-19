@@ -190,7 +190,9 @@ class SkillsReport(BaseReport):
         # Формирование отчета
         return self._format_skills_report(skills_stats, employees_stats)
 
-    def _parse_skills_from_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _parse_skills_from_data(
+            self,
+            data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Парсит навыки из данных сотрудников"""
         parsed_data = []
 
@@ -216,7 +218,9 @@ class SkillsReport(BaseReport):
 
         return skills
 
-    def _analyze_skills_distribution(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _analyze_skills_distribution(
+            self,
+            data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Анализирует распределение навыков"""
         skills_stats: DefaultDict[str, Dict[str, Any]] = defaultdict(
             lambda: {'employees': [], 'performances': []}
@@ -250,7 +254,9 @@ class SkillsReport(BaseReport):
         # Сортируем по количеству сотрудников (по убыванию)
         return sorted(result, key=lambda x: x['employee_count'], reverse=True)
 
-    def _analyze_employees_skills(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _analyze_employees_skills(
+            self,
+            data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Анализирует сотрудников по количеству навыков"""
         employees_stats = []
 
@@ -269,9 +275,16 @@ class SkillsReport(BaseReport):
             })
 
         # Сортируем по количеству навыков (по убыванию)
-        return sorted(employees_stats, key=lambda x: x['skills_count'], reverse=True)
+        return sorted(
+            employees_stats,
+            key=lambda x: x['skills_count'],
+            reverse=True
+        )
 
-    def _format_skills_report(self, skills_stats: List[Dict], employees_stats: List[Dict]) -> str:
+    def _format_skills_report(
+            self,
+            skills_stats: List[Dict],
+            employees_stats: List[Dict]) -> str:
         """Форматирует полный отчет по навыкам"""
         report_parts = []
 
