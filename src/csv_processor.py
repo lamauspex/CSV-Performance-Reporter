@@ -103,7 +103,7 @@ class CSVProcessor:
             NotADirectoryError: Если путь не является папкой
             PermissionError: Если нет доступа к папке
         """
-        # Находим все CSV файлы в папке
+        # Находим все CSV файлы в папке с учетом конфигурации
         csv_files = discover_csv_files(folder_path)
 
         # TODO: Здесь можно добавить валидацию структуры CSV файлов:
@@ -115,6 +115,19 @@ class CSVProcessor:
             raise ValueError(f"В папке {folder_path} не найдено CSV файлов")
 
         return csv_files
+
+    def discover_default_folder(self) -> str:
+        """
+        Автоматически обнаруживает папку с CSV файлами на основе конфигурации
+
+        Returns:
+            Путь к папке с CSV файлами
+
+        Raises:
+            ValueError: Если папка не найдена или не существует
+        """
+        from src.utils.discover import discover_default_csv_folder
+        return discover_default_csv_folder()
 
     def _process_row(
             self,
@@ -174,8 +187,8 @@ class CSVProcessor:
         # performance
         try:
             performance = float(row['performance'])
-            min_perf = float(config.get('min_performance'))
-            max_perf = float(config.get('max_performance'))
+            min_perf = float(config.get('MIN_PERFORMANCE'))
+            max_perf = float(config.get('MAX_PERFORMANCE'))
             if not (min_perf <= performance <= max_perf):
                 raise ValueError(
                     f"performance должно быть в диапазоне от "
@@ -188,7 +201,7 @@ class CSVProcessor:
         # experience_years
         try:
             experience_years = int(row['experience_years'])
-            min_exp = int(config.get('min_experience_years'))
+            min_exp = int(config.get('MIN_EXPERIENCE_YEARS'))
             if experience_years < min_exp:
                 raise ValueError(
                     f"experience_years должно быть не меньше {min_exp}"

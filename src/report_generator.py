@@ -108,8 +108,8 @@ class PerformanceReport(BaseReport):
         report_data: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Сортирует данные согласно конфигурации"""
-        sort_by_performance = config.get('sort_by_performance')
-        sort_order = config.get('sort_order')
+        sort_by_performance = config.get('SORT_BY_PERFORMANCE')
+        sort_order = config.get('SORT_ORDER')
 
         if not sort_by_performance:
             return report_data

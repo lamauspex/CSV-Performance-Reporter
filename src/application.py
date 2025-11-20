@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 
 from src.services.data_service import DataService
 from src.services.report_service import ReportService
+from src.config import config
 
 
 class Application:
@@ -35,8 +36,10 @@ class Application:
         # Загружаем данные
         data = self._load_data(args)
 
-        # Генерируем отчет
-        report = self._report_service.generate_report(args.report, data)
+        # Генерируем отчет (используем конфигурацию по умолчанию)
+        report_type = args.report or config.get(
+            'DEFAULT_REPORT_TYPE', 'performance')
+        report = self._report_service.generate_report(report_type, data)
 
         # Выводим результат
         print(report)
@@ -75,10 +78,13 @@ class Application:
     @staticmethod
     def create_parser() -> argparse.ArgumentParser:
         """Создает парсер аргументов командной строки"""
+        # Получаем тип отчета по умолчанию из конфигурации
+        default_report = config.get('DEFAULT_REPORT_TYPE', 'performance')
+
         parser = argparse.ArgumentParser(
             description='Генератор отчетов производительности из CSV файлов',
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="""
+            epilog=f"""
 Доступные типы отчетов:
   performance  Отчет по эффективности сотрудников по позициям
   skills       Отчет по навыкам сотрудников
@@ -104,8 +110,8 @@ class Application:
 
         parser.add_argument(
             '--report',
-            required=True,
+            default=default_report,
             choices=['performance', 'skills'],
-            help='Тип отчета для генерации (performance или skills)'
+            help=f'Тип отчета для генерации (по умолчанию: {default_report})'
         )
         return parser

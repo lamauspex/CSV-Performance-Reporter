@@ -1,7 +1,9 @@
 """
 Сервис для генерации отчетов
 """
+
 from typing import List, Dict, Any
+
 from src.interfaces.report_generator import ReportGeneratorInterface
 
 
