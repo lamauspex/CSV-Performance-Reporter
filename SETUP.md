@@ -4,8 +4,7 @@
 
 1. Клонируйте репозиторий:
 ```bash
-git clone <repository-url>
-cd csv-performance-reporter
+git clone https://github.com/lamauspex/CSV-Performance-Reporter/tree/master
 ```
 
 2. Установите зависимости:
@@ -110,10 +109,10 @@ python main.py --folder data --report skills
 
 Сотрудники с навыком 'Python':
 ╔════╤═══════════════════════╤═══════════════════════╤═══════════════════╗
-║ №  │ Имя                  │ Позиция               │ Эффективность     ║
+║ №  │ Имя                   │ Позиция               │ Эффективность     ║
 ╠════╪═══════════════════════╪═══════════════════════╪═══════════════════╣
-║ 1  │ Иван Петров          │ Backend Developer     │ 4.5                ║
-║ 2  │ Мария Сидорова       │ Data Engineer         │ 4.8                ║
+║ 1  │ Иван Петров           │ Backend Developer     │ 4.5               ║
+║ 2  │ Мария Сидорова        │ Data Engineer         │ 4.8               ║
 ╚════╧═══════════════════════╧═══════════════════════╧═══════════════════╝
 ```
 
@@ -156,34 +155,8 @@ pytest tests/test_csv_processor.py -v
 pytest tests/ -v --tb=long
 ```
 
-## Структура проекта
 
-```
-csv-performance-reporter/
-├── main.py                 # Основной скрипт
-├── requirements.txt        # Зависимости Python
-├── README.md              # Основное описание проекта
-├── SETUP.md               # Инструкция по установке и использованию
-├── src/                   # Исходный код
-│   ├── __init__.py
-│   ├── config.py          # Конфигурация
-│   ├── csv_processor.py   # Обработка CSV файлов
-│   ├── report_generator.py # Генерация отчетов
-│   └── utils/
-│       └── discover.py    # Поиск CSV файлов
-├── tests/                 # Тесты
-│   ├── __init__.py
-│   ├── pytest.ini         # Конфигурация pytest
-│   ├── test_csv_processor.py
-│   ├── test_discover.py
-│   ├── test_integration.py
-│   └── test_report_generator.py
-└── data/                  # Примеры данных
-    ├── employees1.csv
-    └── employees2.csv
-```
 
 ## Дополнительная информация
 
 - Подробное описание проекта: [README.md](README.md)
-- Архитектура и возможности расширения: [README.md](README.md#архитектура-и-расширение)
