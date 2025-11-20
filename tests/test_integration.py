@@ -14,8 +14,8 @@ class TestIntegration:
     def test_main_with_valid_files(self):
         """Тест полного цикла с валидными файлами"""
         # Используем реальные файлы данных
-        demo_file = config.get('demo_data_file')
-        test_file = config.get('test_data_file')
+        demo_file = config.get('DEMO_DATA_FILE')
+        test_file = config.get('TEST_DATA_FILE')
 
         # Импортируем main после создания файлов
         from main import main
@@ -48,7 +48,7 @@ class TestIntegration:
 
     def test_main_with_demo_file_only(self):
         """Тест с только демонстрационным файлом"""
-        demo_file = config.get('demo_data_file')
+        demo_file = config.get('DEMO_DATA_FILE')
 
         from main import main
 
@@ -67,7 +67,7 @@ class TestIntegration:
 
     def test_main_with_test_file_only(self):
         """Тест с только тестовым файлом"""
-        test_file = config.get('test_data_file')
+        test_file = config.get('TEST_DATA_FILE')
 
         from main import main
 
@@ -109,7 +109,7 @@ class TestIntegration:
 
     def test_main_with_invalid_report_type(self):
         """Тест с неподдерживаемым типом отчета"""
-        test_file = config.get('test_data_file')
+        test_file = config.get('TEST_DATA_FILE')
 
         from main import main
 
@@ -133,7 +133,7 @@ class TestIntegration:
         """Тест загрузки конфигурации"""
         # Проверяем, что конфигурация загружается корректно
         assert config.get('default_report_type') == 'performance'
-        assert 'employees1.csv' in config.get('demo_data_file')
-        assert 'employees2.csv' in config.get('test_data_file')
+        assert 'employees1.csv' in config.get('DEMO_DATA_FILE')
+        assert 'employees2.csv' in config.get('TEST_DATA_FILE')
         assert config.get('min_performance') == 0.0
         assert config.get('max_performance') == 5.0

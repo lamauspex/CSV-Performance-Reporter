@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, DefaultDict
 from collections import defaultdict
 from tabulate import tabulate
-from .config import config
+
+from src.config import config
 
 
 class BaseReport(ABC):

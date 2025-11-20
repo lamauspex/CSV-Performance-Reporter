@@ -63,9 +63,15 @@ class SimpleParser(ConfigurationParser):
     def parse(self, raw_config: Dict[str, str]) -> Dict[str, Any]:
         """Парсит сырую конфигурацию"""
         parsed = {}
+
         for key, converter in self.type_converters.items():
             value = raw_config.get(key)
             if value is not None:
                 parsed[key] = converter(value) if callable(
                     converter) else converter
+
+                # Добавляем также ключ в нижнем регистре для обратной совместимости
+                lowercase_key = key.lower()
+                parsed[lowercase_key] = parsed[key]
+
         return parsed

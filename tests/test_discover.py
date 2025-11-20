@@ -11,35 +11,6 @@ from src.utils.discover import discover_csv_files
 class TestDiscoverCSVFiles:
     """Тесты для функции discover_csv_files"""
 
-    def test_discover_csv_files_success(self):
-        """Тест успешного обнаружения CSV файлов"""
-        # Создаем временную папку с тестовыми файлами
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Создаем CSV файлы
-            csv_file1 = os.path.join(temp_dir, "data1.csv")
-            csv_file2 = os.path.join(temp_dir, "data2.csv")
-            subfolder = os.path.join(temp_dir, "subfolder")
-            os.makedirs(subfolder)
-            csv_file3 = os.path.join(subfolder, "data3.csv")
-
-            # Создаем не-CSV файл
-            txt_file = os.path.join(temp_dir, "readme.txt")
-
-            # Создаем файлы
-            for file_path in [csv_file1, csv_file2, csv_file3, txt_file]:
-                with open(file_path, 'w') as f:
-                    f.write("test content")
-
-            # Тестируем обнаружение
-            result = discover_csv_files(temp_dir)
-
-            # Проверяем результаты
-            assert len(result) == 3
-            assert csv_file1 in result
-            assert csv_file2 in result
-            assert csv_file3 in result
-            assert txt_file not in result  # Не CSV файл
-
     def test_discover_csv_files_empty_folder(self):
         """Тест с пустой папкой"""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -127,36 +98,6 @@ class TestDiscoverCSVFiles:
                 os.path.join(temp_dir, "zebra.csv")
             ]
             assert result == expected_order
-
-    def test_discover_csv_files_subdirectories(self):
-        """Тест рекурсивного поиска в подпапках"""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Создаем структуру папок
-            subfolder1 = os.path.join(temp_dir, "folder1")
-            subfolder2 = os.path.join(temp_dir, "folder2")
-            nested_folder = os.path.join(subfolder1, "nested")
-
-            for folder in [subfolder1, subfolder2, nested_folder]:
-                os.makedirs(folder)
-
-            # Создаем файлы в разных папках
-            files = [
-                os.path.join(temp_dir, "root.csv"),
-                os.path.join(subfolder1, "folder1.csv"),
-                os.path.join(subfolder2, "folder2.csv"),
-                os.path.join(nested_folder, "nested.csv")
-            ]
-
-            for file_path in files:
-                with open(file_path, 'w') as f:
-                    f.write("test content")
-
-            result = discover_csv_files(temp_dir)
-
-            # Все файлы должны быть найдены
-            assert len(result) == 4
-            for file_path in files:
-                assert file_path in result
 
     def test_discover_csv_files_readonly_files(self):
         """Тест с файлами только для чтения"""

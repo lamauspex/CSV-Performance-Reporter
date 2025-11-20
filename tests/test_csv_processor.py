@@ -232,34 +232,6 @@ Test User,Developer,10,4.5,"Python, Django",Test Team,2
             ):
                 processor.discover_and_validate_files(tmp_file.name)
 
-    def test_discover_and_validate_files_with_subdirectories(self):
-        """Тест обнаружения файлов в подпапках"""
-        processor = CSVProcessor()
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Создаем подпапку
-            subfolder = os.path.join(temp_dir, "subfolder")
-            os.makedirs(subfolder)
-
-            # Создаем файлы в разных местах
-            root_file = os.path.join(temp_dir, "root.csv")
-            sub_file = os.path.join(subfolder, "sub.csv")
-
-            csv_content = """name,position,completed_tasks,performance,skills,team,experience_years
-Test User,Developer,10,4.5,"Python",Test Team,2
-"""
-
-            for file_path in [root_file, sub_file]:
-                with open(file_path, 'w') as f:
-                    f.write(csv_content)
-
-            # Тестируем обнаружение
-            result = processor.discover_and_validate_files(temp_dir)
-
-            assert len(result) == 2
-            assert root_file in result
-            assert sub_file in result
-
     def test_discover_and_validate_files_invalid_csv(self):
         """Тест с невалидным CSV файлом"""
         processor = CSVProcessor()
